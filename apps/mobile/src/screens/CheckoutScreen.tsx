@@ -4,9 +4,9 @@ import {
   StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import * as ImagePicker from 'expo-image-picker'
 import { useCart } from '../lib/cart'
 import { useAuth } from '../lib/auth'
-import { supabase } from '../lib/supabase'
 import { API_URL } from '../lib/config'
 import { theme, formatPrice } from '../lib/theme'
 
@@ -73,6 +73,8 @@ export default function CheckoutScreen({ navigation }: any) {
   const [loading, setLoading]       = useState(false)
   const [config, setConfig]         = useState<StoreConfig>({})
   const [payMethod, setPayMethod]   = useState<PaymentMethod>('deuna')
+  const [comprobante, setComprobante] = useState<ImagePicker.ImagePickerAsset | null>(null)
+  const [uploadingComprobante, setUploadingComprobante] = useState(false)
   const [orderNumber, setOrderNumber] = useState('')
   const [orderTotal, setOrderTotal]   = useState(0)
   const [form, setForm] = useState({
@@ -120,10 +122,49 @@ export default function CheckoutScreen({ navigation }: any) {
     setStep('payment')
   }
 
+  async function elegirComprobante(fuente: 'camara' | 'galeria') {
+    const permiso = fuente === 'camara'
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permiso.granted) {
+      Alert.alert('Permiso necesario', 'Habilitá el acceso para adjuntar el comprobante.')
+      return
+    }
+    const result = fuente === 'camara'
+      ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+    if (!result.canceled && result.assets[0]) setComprobante(result.assets[0])
+  }
+
+  function elegirComprobanteMenu() {
+    Alert.alert('Comprobante de pago', '¿Cómo querés adjuntarlo?', [
+      { text: 'Tomar foto', onPress: () => elegirComprobante('camara') },
+      { text: 'Elegir de galería', onPress: () => elegirComprobante('galeria') },
+      { text: 'Cancelar', style: 'cancel' },
+    ])
+  }
+
   async function submitManual() {
+    if (!comprobante) {
+      Alert.alert('Falta el comprobante', 'Adjuntá una foto del comprobante de pago para confirmar el pedido.')
+      return
+    }
     setLoading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      // 1) Subir el comprobante
+      setUploadingComprobante(true)
+      const fd = new FormData()
+      fd.append('file', {
+        uri: comprobante.uri,
+        name: comprobante.fileName ?? 'comprobante.jpg',
+        type: comprobante.mimeType ?? 'image/jpeg',
+      } as any)
+      const upRes = await fetch(`${API_URL}/api/comprobantes`, { method: 'POST', body: fd })
+      const upData = await upRes.json()
+      setUploadingComprobante(false)
+      if (!upRes.ok) throw new Error(upData.error ?? 'No se pudo subir el comprobante')
+
+      // 2) Crear el pedido con la referencia del comprobante
       const res = await fetch(`${API_URL}/api/checkout/manual`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,6 +173,7 @@ export default function CheckoutScreen({ navigation }: any) {
           shippingAddress: { ...form, country: 'Ecuador' },
           userId: user?.id ?? null,
           paymentMethod: payMethod,
+          comprobanteUrl: upData.path,
         }),
       })
       const data = await res.json()
@@ -142,7 +184,10 @@ export default function CheckoutScreen({ navigation }: any) {
       setStep('confirm')
     } catch (err: any) {
       Alert.alert('Error', err.message)
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+      setUploadingComprobante(false)
+    }
   }
 
   async function submitCard() {
@@ -175,9 +220,7 @@ export default function CheckoutScreen({ navigation }: any) {
 
   // ─── Confirm screen ──────────────────────────────────────────────────────────
   if (step === 'confirm') {
-    const waText = encodeURIComponent(
-      `Hola! Quiero enviar mi comprobante para el pedido ${orderNumber}.\nTotal: ${formatPrice(orderTotal)}`
-    )
+    const waText = encodeURIComponent(`Hola! Tengo una consulta sobre mi pedido ${orderNumber}.`)
     const waUrl = config.whatsapp_number
       ? `https://wa.me/${config.whatsapp_number}?text=${waText}`
       : null
@@ -191,36 +234,26 @@ export default function CheckoutScreen({ navigation }: any) {
           <Text style={s.confirmOrder}>{orderNumber}</Text>
 
           <Text style={s.confirmInstr}>
-            Realiza tu pago y envía el comprobante para que procesemos tu pedido.
+            Ya recibimos tu comprobante de pago. Vamos a revisarlo y confirmarte el pedido a la brevedad.
           </Text>
 
           {payMethod === 'deuna' && (
             <View style={s.payCard}>
-              <Text style={s.payCardTitle}>💳  Pagar con De Una</Text>
-              {config.deuna_qr_url && (
-                <Image source={{ uri: config.deuna_qr_url }} style={s.qr} resizeMode="contain" />
-              )}
-              {config.deuna_phone && (
-                <Text style={s.payCardInfo}>📱 {config.deuna_phone}</Text>
-              )}
+              <Text style={s.payCardTitle}>💳  Pagado con De Una</Text>
               <Text style={s.payCardTotal}>{formatPrice(orderTotal)}</Text>
             </View>
           )}
 
           {payMethod === 'bank' && (
             <View style={s.payCard}>
-              <Text style={s.payCardTitle}>🏦  Transferencia bancaria</Text>
-              {config.bank_name    && <Text style={s.payCardInfo}>Banco: <Text style={s.payCardBold}>{config.bank_name}</Text></Text>}
-              {config.bank_account && <Text style={s.payCardInfo}>Cuenta: <Text style={s.payCardBold}>{config.bank_account}</Text></Text>}
-              {config.bank_holder  && <Text style={s.payCardInfo}>Titular: <Text style={s.payCardBold}>{config.bank_holder}</Text></Text>}
-              {config.bank_id      && <Text style={s.payCardInfo}>Cédula: <Text style={s.payCardBold}>{config.bank_id}</Text></Text>}
+              <Text style={s.payCardTitle}>🏦  Pagado por transferencia</Text>
               <Text style={s.payCardTotal}>{formatPrice(orderTotal)}</Text>
             </View>
           )}
 
           {waUrl && (
             <TouchableOpacity style={s.waBtn} onPress={() => Linking.openURL(waUrl)}>
-              <Text style={s.waBtnText}>💬  Enviar comprobante por WhatsApp</Text>
+              <Text style={s.waBtnText}>💬  ¿Dudas? Escribinos por WhatsApp</Text>
             </TouchableOpacity>
           )}
 
@@ -346,6 +379,23 @@ export default function CheckoutScreen({ navigation }: any) {
               </View>
             )}
 
+            {/* Comprobante de pago — obligatorio para métodos manuales */}
+            {payMethod !== 'card' && (
+              <View style={s.detailBox}>
+                <Text style={[s.detailText, { fontWeight: '700', marginBottom: 8 }]}>Comprobante de pago</Text>
+                <TouchableOpacity style={s.comprobanteBox} onPress={elegirComprobanteMenu}>
+                  {comprobante ? (
+                    <>
+                      <Image source={{ uri: comprobante.uri }} style={s.comprobanteThumb} resizeMode="cover" />
+                      <Text style={s.comprobanteChangeText}>Tocá para cambiar la foto</Text>
+                    </>
+                  ) : (
+                    <Text style={s.comprobantePickText}>📎  Tocá para adjuntar la foto del comprobante</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Order total */}
             <View style={s.totalBox}>
               <Text style={s.totalLabel}>Total a pagar</Text>
@@ -353,14 +403,15 @@ export default function CheckoutScreen({ navigation }: any) {
             </View>
 
             <TouchableOpacity
-              style={[s.btnPrimary, loading && { opacity: 0.7 }]}
+              style={[s.btnPrimary, (loading || (payMethod !== 'card' && !comprobante)) && { opacity: 0.5 }]}
               onPress={payMethod === 'card' ? submitCard : submitManual}
-              disabled={loading}
+              disabled={loading || (payMethod !== 'card' && !comprobante)}
             >
               {loading
                 ? <ActivityIndicator color="#fff" />
                 : <Text style={s.btnPrimaryText}>
-                    {payMethod === 'card' ? '💳  Pagar ahora' : '✅  Confirmar pedido'}
+                    {payMethod === 'card' ? '💳  Pagar ahora'
+                      : uploadingComprobante ? 'Subiendo comprobante...' : '✅  Confirmar pedido'}
                   </Text>
               }
             </TouchableOpacity>
@@ -434,6 +485,12 @@ const s = StyleSheet.create({
   detailBox:       { backgroundColor: theme.gray50, borderRadius: 12, padding: 14, marginBottom: 14 },
   detailText:      { fontSize: 13, color: theme.gray700, marginBottom: 4 },
   qrSmall:         { width: '100%', height: 160, marginTop: 8 },
+  // Comprobante
+  comprobanteBox:      { borderWidth: 1.5, borderColor: theme.gray200, borderStyle: 'dashed',
+                         borderRadius: 12, padding: 14, alignItems: 'center', backgroundColor: theme.white },
+  comprobantePickText: { fontSize: 13, color: theme.gray500, textAlign: 'center' },
+  comprobanteThumb:    { width: '100%', height: 140, borderRadius: 10, marginBottom: 8 },
+  comprobanteChangeText: { fontSize: 12, color: theme.primary, fontWeight: '700' },
   // Total
   totalBox:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
                      backgroundColor: theme.white, borderRadius: 14, padding: 16, marginBottom: 16,
@@ -446,7 +503,7 @@ const s = StyleSheet.create({
   confirmTitle:    { fontSize: 26, fontWeight: '900', color: theme.gray900, marginBottom: 6 },
   confirmSub:      { fontSize: 14, color: theme.gray500, marginBottom: 4 },
   confirmOrder:    { fontSize: 22, fontWeight: '900', color: theme.primary, letterSpacing: 1, marginBottom: 16 },
-  confirmInstr:    { fontSize: 14, color: theme.gray600 as any, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  confirmInstr:    { fontSize: 14, color: theme.gray500, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   payCard:         { width: '100%', backgroundColor: theme.white, borderRadius: 16, padding: 20,
                      marginBottom: 16, borderWidth: 1, borderColor: theme.gray100 },
   payCardTitle:    { fontSize: 15, fontWeight: '700', color: theme.gray900, marginBottom: 12 },

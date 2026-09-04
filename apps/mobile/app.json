@@ -13,7 +13,11 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ropademec.app"
+      "bundleIdentifier": "com.ropademec.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Se usa la cámara para fotografiar el comprobante de pago.",
+        "NSPhotoLibraryUsageDescription": "Se usa la galería para adjuntar el comprobante de pago."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,6 +25,15 @@
       },
       "package": "com.ropademec.app"
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Se usa la galería para adjuntar el comprobante de pago.",
+          "cameraPermission": "Se usa la cámara para fotografiar el comprobante de pago."
+        }
+      ]
+    ],
     "newArchEnabled": true
   }
 }

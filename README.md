@@ -49,7 +49,8 @@ pnpm dev:web      # http://localhost:3000
 ```
 
 Sin un subdominio real en local, el negocio activo se resuelve por
-`NEXT_PUBLIC_STORE_SLUG` en `apps/web/.env.local`.
+`NEXT_PUBLIC_STORE_SLUG` en `apps/web/.env.local`. Para pasar a subdominios reales
+(`<slug>.tudominio.com`) en producción, ver **[`DEPLOY.md`](./DEPLOY.md)**.
 
 ### Base de datos
 

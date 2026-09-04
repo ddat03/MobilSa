@@ -11,13 +11,13 @@ function generateOrderNumber() {
 
 export async function POST(req: Request) {
   try {
-    const { items, shippingAddress, userId, paymentMethod, subtotal, shipping, total, comprobanteUrl, channel } = await req.json()
+    const { items, shippingAddress, userId, paymentMethod, subtotal, shipping, total, comprobanteUrl } = await req.json()
 
     if (!items?.length) return NextResponse.json({ error: 'Carrito vacío' }, { status: 400 })
-    // El sitio web exige comprobante (ver CheckoutForm.tsx — el botón queda deshabilitado
-    // sin archivo). apps/mobile todavía no tiene subida de foto, así que sigue con el
-    // flujo viejo (WhatsApp manual) mientras eso no se implemente ahí también.
-    if (channel === 'web' && !comprobanteUrl) {
+    // Tanto el sitio web (CheckoutForm.tsx) como la app móvil (CheckoutScreen.tsx)
+    // suben el comprobante antes de llamar acá — sin comprobante no hay forma de
+    // verificar el pago manual, así que se exige siempre.
+    if (!comprobanteUrl) {
       return NextResponse.json({ error: 'Falta subir el comprobante de pago' }, { status: 400 })
     }
 
@@ -40,15 +40,15 @@ export async function POST(req: Request) {
         store_id:         store.id,
         user_id:          userId ?? null,
         order_number:     orderNumber,
-        status:           comprobanteUrl ? 'pago_en_revision' : 'pending_payment',
-        channel:          'web', // TODO: sumar 'app' al check constraint de orders.channel cuando la app móvil tenga canal propio
+        status:           'pago_en_revision',
+        channel:          'web', // web y app móvil comparten este canal; telegram/whatsapp son el bot
         payment_method:   paymentMethod ?? 'manual',
         subtotal:         calculatedSubtotal,
         shipping_cost:    calculatedShipping,
         discount:         0,
         total:            calculatedTotal,
         shipping_address: shippingAddress,
-        comprobante_url:  comprobanteUrl ?? null,
+        comprobante_url:  comprobanteUrl,
       })
       .select('id, order_number')
       .single()
@@ -68,17 +68,15 @@ export async function POST(req: Request) {
 
     await supabase.from('order_items').insert(orderItems)
 
-    if (comprobanteUrl) {
-      await supabase.from('pagos_verificacion').insert({
-        store_id:         store.id,
-        referencia_tipo:  'pedido_tienda',
-        referencia_id:    order.id,
-        comprobante_url:  comprobanteUrl,
-        monto_declarado:  calculatedTotal,
-        metodo_pago:      paymentMethod ?? 'manual',
-        estado:           'pendiente',
-      })
-    }
+    await supabase.from('pagos_verificacion').insert({
+      store_id:         store.id,
+      referencia_tipo:  'pedido_tienda',
+      referencia_id:    order.id,
+      comprobante_url:  comprobanteUrl,
+      monto_declarado:  calculatedTotal,
+      metodo_pago:      paymentMethod ?? 'manual',
+      estado:           'pendiente',
+    })
 
     return NextResponse.json({ orderId: order.id, orderNumber: order.order_number })
   } catch (err: any) {

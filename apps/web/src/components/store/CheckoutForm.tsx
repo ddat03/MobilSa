@@ -115,7 +115,6 @@ export function CheckoutForm({ storeConfig }: CheckoutFormProps) {
           shipping,
           total: orderTotal,
           comprobanteUrl: upData.path,
-          channel: 'web',
         }),
       })
       const data = await res.json()
