@@ -4,9 +4,10 @@ import { useCartStore } from '@/store/cart'
 import { Button } from '@/components/ui/Button'
 import { CheckCircle } from 'lucide-react'
 import Link from 'next/link'
-import { ACTIVE_CONFIG } from '@ecommerce/config'
+import { useStoreName } from '@/lib/useStoreName'
 
 export default function CheckoutSuccessPage() {
+  const storeName = useStoreName()
   const { clear } = useCartStore()
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function CheckoutSuccessPage() {
         <CheckCircle size={64} className="mx-auto text-green-500 mb-6" />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">¡Pago exitoso!</h1>
         <p className="text-gray-500 mb-2">
-          Gracias por tu compra en <strong>{ACTIVE_CONFIG.store_name}</strong>.
+          Gracias por tu compra en <strong>{storeName}</strong>.
         </p>
         <p className="text-sm text-gray-400 mb-8">
           Recibirás una confirmación pronto. Nos comunicaremos contigo para coordinar el envío.

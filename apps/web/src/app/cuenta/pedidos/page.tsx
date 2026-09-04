@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
-import { ACTIVE_CONFIG } from '@ecommerce/config'
+import { getStore } from '@/lib/store'
 import Link from 'next/link'
 import { ShoppingBag, ChevronRight } from 'lucide-react'
 
@@ -32,6 +32,8 @@ export default async function MisPedidosPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const store = await getStore()
+  const currency = store?.currency ?? 'USD'
   const admin = createAdminClient()
   const { data: orders } = await admin
     .from('orders')
@@ -78,7 +80,7 @@ export default async function MisPedidosPage() {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-black">{formatPrice(order.total, ACTIVE_CONFIG.currency)}</p>
+                  <p className="font-bold text-black">{formatPrice(order.total, currency)}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{order.items?.length ?? 0} producto{order.items?.length !== 1 ? 's' : ''}</p>
                 </div>
               </div>

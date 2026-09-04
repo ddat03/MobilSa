@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { ACTIVE_CONFIG } from '@ecommerce/config'
 
 export default function NotFound() {
   return (

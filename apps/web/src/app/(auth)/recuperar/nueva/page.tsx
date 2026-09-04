@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ACTIVE_CONFIG } from '@ecommerce/config'
+import { useStoreName } from '@/lib/useStoreName'
 
 export default function NuevaContrasenaPage() {
+  const storeName = useStoreName()
   const router = useRouter()
   const [password, setPassword]   = useState('')
   const [confirm, setConfirm]     = useState('')
@@ -38,7 +39,7 @@ export default function NuevaContrasenaPage() {
     <div className="min-h-screen bg-black flex flex-col">
       <div className="container-px py-6">
         <Link href="/" className="heading-sm text-white hover:text-[var(--color-secondary)] transition-colors">
-          {ACTIVE_CONFIG.store_name}
+          {storeName}
         </Link>
       </div>
       <div className="flex-1 flex items-center justify-center px-4 py-12">

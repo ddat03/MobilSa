@@ -3,9 +3,10 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ACTIVE_CONFIG } from '@ecommerce/config'
+import { useStoreName } from '@/lib/useStoreName'
 
 export default function LoginPage() {
+  const storeName = useStoreName()
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/'
@@ -35,7 +36,7 @@ export default function LoginPage() {
       {/* Header minimal */}
       <div className="container-px py-6">
         <Link href="/" className="heading-sm text-white hover:text-[var(--color-secondary)] transition-colors">
-          {ACTIVE_CONFIG.store_name}
+          {storeName}
         </Link>
       </div>
 

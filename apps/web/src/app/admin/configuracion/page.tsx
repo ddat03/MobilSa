@@ -13,6 +13,7 @@ export default async function ConfigPage() {
         <p className="text-sm text-gray-500">Los cambios se aplican en toda la tienda al instante.</p>
       </div>
       <ConfigForm store={store} />
+      <p className="text-xs text-gray-300 mt-8">Creado por Diego Aleman</p>
     </div>
   )
 }

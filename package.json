@@ -5,6 +5,7 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
+    "dev:bot": "pnpm --filter bot dev",
     "build:web": "pnpm --filter web build",
     "db:types": "supabase gen types typescript --local > packages/core/src/database.types.ts"
   },
