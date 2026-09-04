@@ -1,0 +1,87 @@
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getStore } from '@/lib/store'
+import { NextResponse } from 'next/server'
+
+function generateOrderNumber() {
+  const date = new Date()
+  const d = date.toISOString().slice(0, 10).replace(/-/g, '')
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
+  return `ORD-${d}-${rand}`
+}
+
+export async function POST(req: Request) {
+  try {
+    const { items, shippingAddress, userId, paymentMethod, subtotal, shipping, total, comprobanteUrl, channel } = await req.json()
+
+    if (!items?.length) return NextResponse.json({ error: 'Carrito vacío' }, { status: 400 })
+    // El sitio web exige comprobante (ver CheckoutForm.tsx — el botón queda deshabilitado
+    // sin archivo). apps/mobile todavía no tiene subida de foto, así que sigue con el
+    // flujo viejo (WhatsApp manual) mientras eso no se implemente ahí también.
+    if (channel === 'web' && !comprobanteUrl) {
+      return NextResponse.json({ error: 'Falta subir el comprobante de pago' }, { status: 400 })
+    }
+
+    const supabase = createAdminClient()
+
+    const store = await getStore()
+
+    if (!store) return NextResponse.json({ error: 'Tienda no encontrada' }, { status: 500 })
+
+    const orderNumber = generateOrderNumber()
+
+    // Calculate total from items if not provided (mobile app omits subtotal/shipping/total)
+    const calculatedSubtotal = subtotal ?? items.reduce((s: number, i: any) => s + i.unitPrice * i.quantity, 0)
+    const calculatedShipping = shipping ?? 0
+    const calculatedTotal    = total    ?? calculatedSubtotal + calculatedShipping
+
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        store_id:         store.id,
+        user_id:          userId ?? null,
+        order_number:     orderNumber,
+        status:           comprobanteUrl ? 'pago_en_revision' : 'pending_payment',
+        channel:          'web', // TODO: sumar 'app' al check constraint de orders.channel cuando la app móvil tenga canal propio
+        payment_method:   paymentMethod ?? 'manual',
+        subtotal:         calculatedSubtotal,
+        shipping_cost:    calculatedShipping,
+        discount:         0,
+        total:            calculatedTotal,
+        shipping_address: shippingAddress,
+        comprobante_url:  comprobanteUrl ?? null,
+      })
+      .select('id, order_number')
+      .single()
+
+    if (orderError) throw new Error(orderError.message)
+
+    const orderItems = items.map((item: any) => ({
+      order_id:     order.id,
+      product_id:   item.productId,
+      variant_id:   item.variantId,
+      product_name: item.productName,
+      variant_info: item.variantInfo ?? null,
+      quantity:     item.quantity,
+      unit_price:   item.unitPrice,
+      total_price:  item.unitPrice * item.quantity,
+    }))
+
+    await supabase.from('order_items').insert(orderItems)
+
+    if (comprobanteUrl) {
+      await supabase.from('pagos_verificacion').insert({
+        store_id:         store.id,
+        referencia_tipo:  'pedido_tienda',
+        referencia_id:    order.id,
+        comprobante_url:  comprobanteUrl,
+        monto_declarado:  calculatedTotal,
+        metodo_pago:      paymentMethod ?? 'manual',
+        estado:           'pendiente',
+      })
+    }
+
+    return NextResponse.json({ orderId: order.id, orderNumber: order.order_number })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

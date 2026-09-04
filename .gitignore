@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Expo
+.expo/
+dist/
+
+# Environment variables — NUNCA subir al repositorio
+.env
+.env.local
+.env.production
+
+# Build outputs
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Supabase local
+supabase/.temp/

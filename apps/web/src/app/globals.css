@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { @apply text-gray-900; }
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading, 'Bebas Neue', sans-serif);
+    letter-spacing: 0.02em;
+  }
+}
+
+/* ─── Keyframes ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(36px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.90); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ─── Animation classes ─── */
+.animate-fade-up    { animation: fadeUp 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-fade-in    { animation: fadeIn 0.55s ease both; }
+.animate-slide-left { animation: slideInLeft 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-slide-right{ animation: slideInRight 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-scale-in   { animation: scaleIn 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-marquee    { animation: marquee 22s linear infinite; }
+
+/* Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+
+/* Scroll reveal via IntersectionObserver */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1);
+}
+[data-reveal="left"]  { transform: translateX(-36px); }
+[data-reveal="right"] { transform: translateX(36px); }
+[data-reveal="scale"] { transform: scale(0.92); }
+[data-reveal].revealed { opacity: 1; transform: none; }
+
+/* ─── Componentes Nike ─── */
+@layer components {
+
+  /* Inputs */
+  .input {
+    @apply w-full border border-gray-200 rounded-none px-4 py-3 text-sm
+           focus:outline-none focus:border-black transition-colors bg-white;
+  }
+  .label-sm { @apply block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2; }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center
+           bg-black text-white px-8 py-4
+           text-sm font-bold uppercase tracking-widest
+           hover:bg-[var(--color-secondary)]
+           active:scale-95
+           transition-all duration-200 cursor-pointer;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center
+           border-2 border-black text-black px-8 py-4
+           text-sm font-bold uppercase tracking-widest
+           hover:bg-black hover:text-white
+           active:scale-95
+           transition-all duration-200 cursor-pointer;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center
+           bg-[var(--color-secondary)] text-white px-8 py-4
+           text-sm font-bold uppercase tracking-widest
+           hover:opacity-90
+           active:scale-95
+           transition-all duration-200 cursor-pointer;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center
+           text-black px-6 py-3
+           text-sm font-bold uppercase tracking-widest
+           hover:text-[var(--color-secondary)]
+           transition-colors duration-200 cursor-pointer;
+  }
+
+  /* Tipografía Nike */
+  .heading-xl {
+    font-family: var(--font-heading, 'Bebas Neue', sans-serif);
+    @apply text-7xl md:text-9xl lg:text-[11rem] leading-none tracking-tight uppercase;
+  }
+  .heading-lg {
+    font-family: var(--font-heading, 'Bebas Neue', sans-serif);
+    @apply text-5xl md:text-7xl leading-none tracking-tight uppercase;
+  }
+  .heading-md {
+    font-family: var(--font-heading, 'Bebas Neue', sans-serif);
+    @apply text-3xl md:text-5xl leading-none tracking-tight uppercase;
+  }
+  .heading-sm {
+    font-family: var(--font-heading, 'Bebas Neue', sans-serif);
+    @apply text-2xl md:text-3xl leading-none tracking-tight uppercase;
+  }
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-secondary)];
+  }
+
+  /* Card producto */
+  .product-card { @apply group relative overflow-hidden bg-white cursor-pointer; }
+  .product-card-img {
+    @apply w-full aspect-[3/4] object-cover transition-transform duration-500
+           group-hover:scale-105;
+  }
+  .product-card-overlay {
+    @apply absolute inset-0 bg-black/0 group-hover:bg-black/20
+           transition-all duration-300 flex items-end justify-center pb-6;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-block text-[10px] font-bold uppercase tracking-widest
+           px-2 py-0.5 bg-[var(--color-secondary)] text-white;
+  }
+  .badge-dark {
+    @apply inline-block text-[10px] font-bold uppercase tracking-widest
+           px-2 py-0.5 bg-black text-white;
+  }
+
+  /* Divider */
+  .divider { @apply border-t border-gray-100; }
+  .divider-dark { @apply border-t border-white/10; }
+
+  /* Section padding */
+  .section { @apply py-16 md:py-24; }
+  .container-px { @apply px-4 md:px-8 lg:px-16 max-w-screen-xl mx-auto; }
+}
