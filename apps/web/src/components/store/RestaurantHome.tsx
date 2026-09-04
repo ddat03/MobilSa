@@ -35,9 +35,14 @@ export async function RestaurantHome({ store }: { store: StoreConfig }) {
           <p className="eyebrow mb-4">Menú digital</p>
           <h1 className="heading-xl text-white mb-4">{store.name}</h1>
           {store.tagline && <p className="text-white/55 text-base md:text-lg max-w-md mb-8">{store.tagline}</p>}
-          <Link href="/menu" className="btn-accent inline-flex items-center gap-2">
-            Ver el menú <ArrowRight size={16} />
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/menu" className="btn-accent inline-flex items-center gap-2">
+              Ver el menú <ArrowRight size={16} />
+            </Link>
+            <Link href="/reservar" className="inline-flex items-center gap-2 border-2 border-white/30 text-white px-6 py-3 text-sm font-bold uppercase tracking-widest hover:border-white transition-all duration-200">
+              Reservar mesa
+            </Link>
+          </div>
         </div>
       </section>
 

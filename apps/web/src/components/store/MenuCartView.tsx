@@ -2,12 +2,11 @@
 import { useMenuCartStore } from '@/store/menuCart'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
-import { WhatsAppCartButton } from '@/components/store/WhatsAppButton'
-import { Trash2, Plus, Minus, UtensilsCrossed } from 'lucide-react'
+import { Trash2, Plus, Minus, UtensilsCrossed, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export function MenuCartView({
-  storeName, whatsappNumber, currency,
+  storeName: _storeName, whatsappNumber, currency,
 }: { storeName: string; whatsappNumber: string | null; currency: string }) {
   const { items, removeItem, updateQuantity, total, itemCount } = useMenuCartStore()
   const cartTotal = total()
@@ -68,13 +67,9 @@ export function MenuCartView({
           </div>
 
           {whatsappNumber ? (
-            <WhatsAppCartButton
-              number={whatsappNumber}
-              storeName={storeName}
-              items={items.map((i) => ({ nombre: i.nombre, cantidad: i.quantity, precio: i.precio }))}
-              total={cartTotal}
-              currency={currency}
-            />
+            <Link href="/pedir" className="btn-primary w-full flex items-center justify-center gap-2">
+              Continuar pedido <ArrowRight size={16} />
+            </Link>
           ) : (
             <p className="text-xs text-gray-400 text-center">
               Este negocio todavía no configuró un WhatsApp para pedidos.

@@ -15,17 +15,18 @@ function buildUrl(number: string, message: string) {
 export interface WhatsAppCartLine { nombre: string; cantidad: number; precio: number }
 
 /**
- * Botón "Finalizar pedido por WhatsApp": arma el mensaje con el pedido completo
- * ya escrito — el cliente solo tiene que tocar Enviar en la app de WhatsApp.
- * Pensado para el módulo restaurante (no hay checkout con pago en la web: en
- * Ecuador el pago con tarjeta no es una opción real para negocios chicos).
+ * Botón final de /pedir: ya se creó el registro en pedidos_restaurante (pendiente_pago),
+ * así que el mensaje incluye la referencia para que el negocio lo encuentre en su panel.
  */
-export function WhatsAppCartButton({
-  number, storeName, items, total, currency,
+export function WhatsAppPedidoConfirmadoButton({
+  number, storeName, referencia, items, modalidad, direccion, total, currency,
 }: {
   number: string
   storeName: string
+  referencia: string
   items: WhatsAppCartLine[]
+  modalidad: 'recoger' | 'domicilio'
+  direccion?: string
   total: number
   currency: string
 }) {
@@ -37,7 +38,10 @@ export function WhatsAppCartButton({
   }
 
   const lineas = items.map((i) => `• ${i.cantidad}x ${i.nombre} — ${fmt(i.precio * i.cantidad)}`).join('\n')
-  const message = `¡Hola ${storeName}! Quiero hacer este pedido:\n\n${lineas}\n\n*Total: ${fmt(total)}*`
+  const modalidadTxt = modalidad === 'domicilio'
+    ? `Envío a domicilio${direccion ? `: ${direccion}` : ''}`
+    : 'Recojo en el local'
+  const message = `¡Hola ${storeName}! Hice el pedido *${referencia}* desde la web:\n\n${lineas}\n\n${modalidadTxt}\n*Total: ${fmt(total)}*\n\nQuedo atento/a a cómo coordinamos el pago. ¡Gracias!`
   const url = buildUrl(number, message)
 
   return (
@@ -48,7 +52,36 @@ export function WhatsAppCartButton({
       className="w-full flex items-center justify-center gap-3 py-4 text-sm font-bold uppercase tracking-widest bg-[#25D366] text-white hover:bg-[#20b558] active:scale-[0.99] transition-all duration-200"
     >
       <MessageCircle size={18} fill="white" />
-      Finalizar pedido por WhatsApp
+      Avisar por WhatsApp
+    </a>
+  )
+}
+
+/** Botón final de /reservar: la reserva ya quedó creada (pendiente_pago). */
+export function WhatsAppReservaButton({
+  number, storeName, referencia, fecha, hora, personas,
+}: {
+  number: string
+  storeName: string
+  referencia: string
+  fecha: string
+  hora: string
+  personas: number
+}) {
+  if (!number) return null
+
+  const message = `¡Hola ${storeName}! Hice una reserva *${referencia}* desde la web:\n\n📅 ${fecha} a las ${hora}\n👥 ${personas} persona${personas === 1 ? '' : 's'}\n\n¿Me confirmás y me decís cómo coordinamos el anticipo? ¡Gracias!`
+  const url = buildUrl(number, message)
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-full flex items-center justify-center gap-3 py-4 text-sm font-bold uppercase tracking-widest bg-[#25D366] text-white hover:bg-[#20b558] active:scale-[0.99] transition-all duration-200"
+    >
+      <MessageCircle size={18} fill="white" />
+      Avisar por WhatsApp
     </a>
   )
 }

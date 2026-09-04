@@ -57,8 +57,9 @@ export default async function StoreLayout({ children }: { children: React.ReactN
               <ul className="space-y-2">
                 {(store?.tipo_servicio === 'restaurante'
                   ? [
-                      { href: '/menu',    label: 'Ver menú' },
-                      { href: '/carrito', label: 'Mi pedido' },
+                      { href: '/menu',     label: 'Ver menú' },
+                      { href: '/reservar', label: 'Reservar mesa' },
+                      { href: '/carrito',  label: 'Mi pedido' },
                     ]
                   : [
                       { href: '/productos', label: 'Todos los productos' },

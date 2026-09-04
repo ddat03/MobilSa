@@ -88,6 +88,7 @@ export function Navbar({ storeName, tipoServicio = 'tienda', categorias = [] }: 
     ? [
         { href: '/menu', label: 'Menú' },
         ...categorias.map((cat) => ({ href: `/menu?categoria=${cat.slug}`, label: cat.nombre })),
+        { href: '/reservar', label: 'Reservar mesa' },
       ]
     : [
         { href: '/productos', label: 'Todos' },
