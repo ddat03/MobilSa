@@ -510,7 +510,7 @@ limpio y consolidado en `supabase/migrations/` (las viejas quedaron en `_legacy_
 | `004_seed.sql` | Negocio #1 `ropa-demo` + categorías demo. Bloque comentado para un `resto-demo` de pruebas. |
 | `_APLICAR_TODO.sql` | Los 4 concatenados — pegar en el SQL Editor de MobilSa y Run. |
 
-**Pendiente de aplicar:** pegar `_APLICAR_TODO.sql` en Supabase → SQL Editor (ver `supabase/README.md`).
+**✅ Aplicado y verificado** (2026-09-03) contra el proyecto MobilSa. Cambios de schema posteriores (RLS ajustada, etc.) se van agregando como migraciones nuevas cuando corresponda — ver `supabase/README.md` para el detalle de archivos.
 
 ## II.6. Cambios en la app, por módulo
 
@@ -551,14 +551,14 @@ limpio y consolidado en `supabase/migrations/` (las viejas quedaron en `_legacy_
 ## II.8. Decisiones tomadas (2026-09-03)
 
 1. **`ropa-demo` se vuelve el negocio #1 de la plataforma.** Pero como la base de datos es nueva (punto 2), no hay que "migrar en caliente": se levanta el schema limpio en el proyecto nuevo, se cargan ahí los datos de `ropa-demo` (config, catálogo, y opcionalmente pedidos históricos) como el primer `store_config`, y recién entonces se repunta el deploy de la tienda de ropa al proyecto nuevo. La tienda actual sigue viva contra su Supabase viejo hasta ese switch.
-2. **Proyecto de Supabase NUEVO y dedicado al SaaS: `MobilSa`** (cuenta `diegodaviaus@hotmail.com`, project ref `ectlzwbvrouewbaivfdl`, repo `ddat03/MobilSa`). Ventaja: `007` deja de ser "reconciliar drift de producción" y pasa a ser sólo "arrancar consistente" — las migraciones `001`–`006` + los cambios que hoy están hechos a mano se consolidan en un set limpio desde el día uno, sin riesgo sobre datos reales. Ya registrado en el `CLAUDE.md` global. **Pendiente:** cargar el `SUPABASE_SERVICE_ROLE_KEY` (formato `sb_secret_...`) en `apps/web/.env.local` y la contraseña de la BD / connection string para poder correr migraciones con `supabase` CLI.
+2. **Proyecto de Supabase NUEVO y dedicado al SaaS: `MobilSa`** (cuenta `diegodaviaus@hotmail.com`, project ref `ectlzwbvrouewbaivfdl`, repo `ddat03/MobilSa`). Ventaja: el schema se arrancó limpio desde el día uno, sin riesgo sobre datos reales. Ya registrado en el `CLAUDE.md` global. `SUPABASE_SERVICE_ROLE_KEY` ya está cargada en `apps/web/.env.local`; las migraciones se aplican pegando SQL en el panel (no hay CLI linkeado ni contraseña de BD compartida — ver `supabase/README.md`).
 3. **Un dueño = un negocio.** Alcanza con `profiles.store_id`. **No** se crea tabla puente `usuarios_negocio`. Si algún día un cliente necesita varios negocios, se agrega después.
 4. **Subdominio por negocio** (`pizzeria-luigi.miplataforma.com`). El helper `getStore()` resuelve por `Host` header en el middleware. Requiere: dominio propio de la plataforma + registro DNS **wildcard** (`*.miplataforma.com`) + wildcard domain configurado en el hosting (Vercel/Netlify soportan esto). El fallback por `NEXT_PUBLIC_STORE_SLUG` se mantiene para los deploys dedicados del Camino B y para desarrollo local.
    - **Estado (2026-09-05):** el código ya está listo (`slugFromHost()` en `lib/store.ts`, con exclusión explícita de `*.vercel.app` para no confundir un preview de Vercel con un negocio real). **Falta el dominio en sí** — Diego todavía no tiene uno comprado; decidió seguir probando con `NEXT_PUBLIC_STORE_SLUG` por ahora y usar **Vercel** como hosting cuando llegue el momento. Receta completa paso a paso (comprar dominio, conectar a Vercel, DNS wildcard, verificación) en **[`DEPLOY.md`](../DEPLOY.md)** — nada de esto se puede hacer sin que Diego tenga el dominio y la cuenta de Vercel en su nombre.
 
-## II.9. Firma de autoría (pendiente en el código)
+## II.9. Firma de autoría
 
-El repo todavía **no** tiene la línea "Creado por Diego Aleman". Al aterrizar esto, agregarla discreta (texto gris chico) en el footer del sitio público (`apps/web/src/app/(store)/layout.tsx`) y en `/admin/configuracion` (o `/superadmin`).
+✅ "Creado por Diego Aleman" ya está en `/superadmin` (footer) y en `/admin/configuracion`.
 
 ---
 
